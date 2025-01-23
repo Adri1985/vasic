@@ -1,16 +1,19 @@
-import React, { useState } from 'react';
+import React from 'react';
 
-function ProductCard({ item, onRemove }) {
-  const [peso, setPeso] = useState(500);
+function ProductCard({ item, onUpdatePeso, onRemove }) {
+  const { id, nombre, emoji, peso } = item; // Extraer datos del producto
 
-  const incrementarPeso = () => setPeso((prev) => prev + 250);
+  // Incrementar peso y llamar al método para actualizar en el backend
+  const incrementarPeso = () => {
+    onUpdatePeso(id, peso + 250); // Aumentar 250 gramos
+  };
 
+  // Decrementar peso o eliminar producto si llega a 0
   const decrementarPeso = () => {
-    const newPeso = peso - 250;
-    if (newPeso <= 0) {
-      onRemove(item);
+    if (peso > 250) {
+      onUpdatePeso(id, peso - 250); // Disminuir 250 gramos
     } else {
-      setPeso(newPeso);
+      onRemove(id); // Eliminar producto si el peso llega a 0
     }
   };
 
@@ -19,8 +22,13 @@ function ProductCard({ item, onRemove }) {
       className="border rounded-lg shadow-md p-2 flex flex-col items-center justify-between"
       style={{ width: '100%', height: '100%' }}
     >
-      <div className="text-6xl mb-2">{item.emoji}</div>
-      <p className="font-semibold text-md mb-2">{item.nombre}</p>
+      {/* Emoji */}
+      <div className="text-6xl mb-2">{emoji}</div>
+
+      {/* Nombre */}
+      <p className="font-semibold text-md mb-2">{nombre}</p>
+
+      {/* Controles de peso */}
       <div className="flex items-center">
         <button
           onClick={decrementarPeso}

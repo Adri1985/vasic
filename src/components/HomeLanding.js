@@ -1,13 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import Header from './Header';
 import ProductCard from './ProductCard';
-
-const initialVerduras = [
-  { id: 1, nombre: 'Tomates', emoji: '🍅' },
-  { id: 2, nombre: 'Cebollas', emoji: '🧅' },
-  { id: 3, nombre: 'Zanahorias', emoji: '🥕' },
-  { id: 4, nombre: 'Lechuga', emoji: '🥬' },
-];
 
 const initialCarrousel = [
   { id: 101, nombre: 'Choclo', emoji: '🌽' },
@@ -23,50 +17,166 @@ const initialCarrousel = [
 ];
 
 function HomeLanding() {
-  const [verduras, setVerduras] = useState(initialVerduras);
+  const [verduras, setVerduras] = useState([]); // Verduras en la suscripción del usuario
   const [carrousel, setCarrousel] = useState(initialCarrousel);
 
-  const handleAddVerdura = (item) => {
+  // Inicializar la suscripción del usuario
+  const initializeSubscription = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Usuario no autenticado. Por favor inicia sesión.');
+        return;
+      }
+
+      // Llamar al endpoint /init
+      await axios.post(
+        'http://localhost:3000/api/subscription/init',
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log('Suscripción inicializada con éxito');
+      fetchSubscription(); // Cargar la suscripción después de inicializarla
+    } catch (error) {
+      console.error('Error al inicializar la suscripción:', error);
+      alert('No se pudo inicializar la suscripción.');
+    }
+  };
+
+  // Obtener la suscripción del usuario
+  const fetchSubscription = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Usuario no autenticado. Por favor inicia sesión.');
+        return;
+      }
+
+      const response = await axios.get('http://localhost:3000/api/subscription', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setVerduras(response.data.subscription); // Actualizar las verduras con los datos del backend
+    } catch (error) {
+      console.error('Error al cargar la suscripción:', error);
+      alert('No se pudo cargar la suscripción.');
+    }
+  };
+
+  // Agregar un producto a la suscripción
+  const handleAddVerdura = async (item) => {
     if (verduras.length >= 6) {
       alert('¡Máximo de 6 verduras!');
       return;
     }
-    setVerduras((prev) => [...prev, item]);
-    setCarrousel((prev) => prev.filter((i) => i.id !== item.id));
+  
+    try {
+      const token = localStorage.getItem('token');
+  
+      // Producto con peso inicial
+      const producto = {
+        id: item.id,
+        nombre: item.nombre,
+        emoji: item.emoji,
+        peso: 500, // Peso inicial
+      };
+  
+      console.log('Producto enviado al backend:', producto);
+  
+      // Enviar al backend
+      await axios.post('http://localhost:3000/api/subscription/add', producto, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
+      // Actualizar estado
+      setVerduras((prev) => [...prev, producto]);
+      setCarrousel((prev) => prev.filter((i) => i.id !== item.id));
+    } catch (error) {
+      console.error('Error al agregar el producto:', error);
+      alert('No se pudo agregar el producto a la suscripción.');
+    }
+  };
+  
+
+  // Actualizar el peso del producto en la suscripción
+  const handleUpdatePeso = async (id, nuevoPeso) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(
+        'http://localhost:3000/api/subscription/update',
+        { id, peso: nuevoPeso },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setVerduras((prev) =>
+        prev.map((item) =>
+          item.id === id ? { ...item, peso: nuevoPeso } : item
+        )
+      );
+    } catch (error) {
+      console.error('Error al actualizar el peso:', error);
+      alert('No se pudo actualizar el peso del producto.');
+    }
   };
 
-  const handleRemoveVerdura = (item) => {
-    setVerduras((prev) => prev.filter((v) => v.id !== item.id));
-    setCarrousel((prev) => [...prev, item]);
+  // Eliminar un producto de la suscripción
+  const handleRemoveVerdura = async (id) => {
+    try {
+      const token = localStorage.getItem('token');
+      await axios.post(
+        'http://localhost:3000/api/subscription/remove',
+        { id },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const removedProduct = verduras.find((item) => item.id === id);
+      setVerduras((prev) => prev.filter((item) => item.id !== id));
+      setCarrousel((prev) => [...prev, removedProduct]);
+    } catch (error) {
+      console.error('Error al eliminar la verdura:', error);
+      alert('No se pudo eliminar la verdura de la suscripción.');
+    }
   };
+
+  // Cargar la suscripción al montar el componente
+  useEffect(() => {
+    initializeSubscription();
+  }, []);
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
-      {/* Header fijo */}
       <Header />
-
-      {/* Contenido principal */}
       <div className="flex-1 flex flex-col mt-[4rem]">
-        {/* Título (20%) */}
         <div className="flex-none" style={{ height: '20%' }}>
           <h2 className="text-center text-3xl font-bold text-green-600 py-4">
             Tu Suscripción
           </h2>
         </div>
-
-        {/* Productos (50%) */}
-        <div
-          className="flex-none overflow-hidden bg-gray-50 pb-4"
-          style={{ height: '50%' }}
-        >
-          <ProductsGrid verduras={verduras} onRemoveVerdura={handleRemoveVerdura} />
+        <div className="flex-none overflow-hidden bg-gray-50 pb-4" style={{ height: '50%' }}>
+          <ProductsGrid
+            verduras={verduras}
+            onUpdatePeso={handleUpdatePeso}
+            onRemove={handleRemoveVerdura}
+          />
         </div>
-
-        {/* Carrusel (30%) */}
-        <div
-          className="flex-none bg-gray-100 mt-4"
-          style={{ height: '30%' }}
-        >
+        <div className="flex-none bg-gray-100 mt-4" style={{ height: '30%' }}>
           <CarrouselResponsive items={carrousel} onClickItem={handleAddVerdura} />
         </div>
       </div>
@@ -74,23 +184,16 @@ function HomeLanding() {
   );
 }
 
-function ProductsGrid({ verduras, onRemoveVerdura }) {
-  const n = verduras.length;
-  const cols = Math.min(n, 3); // Máximo 3 columnas para pantallas pequeñas
-
-  const gridStyle = {
-    display: 'grid',
-    width: '100%',
-    height: '100%',
-    gridTemplateColumns: `repeat(${cols}, 1fr)`,
-    gridAutoRows: 'minmax(0, 1fr)', // Ajusta dinámicamente las filas
-    gap: '8px',
-  };
-
+function ProductsGrid({ verduras, onUpdatePeso, onRemove }) {
   return (
-    <div style={gridStyle}>
+    <div className="grid grid-cols-3 gap-4">
       {verduras.map((item) => (
-        <ProductCard key={item.id} item={item} onRemove={onRemoveVerdura} />
+        <ProductCard
+          key={item.id}
+          item={item}
+          onUpdatePeso={onUpdatePeso}
+          onRemove={onRemove}
+        />
       ))}
     </div>
   );
@@ -98,16 +201,15 @@ function ProductsGrid({ verduras, onRemoveVerdura }) {
 
 function CarrouselResponsive({ items, onClickItem }) {
   return (
-    <div className="w-full h-full grid grid-cols-5 grid-rows-2 sm:grid-cols-10 sm:grid-rows-1 place-items-center gap-y-2">
+    <div className="grid grid-cols-5 gap-4">
       {items.map((item) => (
         <div
           key={item.id}
           onClick={() => onClickItem(item)}
-          className="text-4xl cursor-pointer hover:scale-110 transition-transform flex flex-col items-center"
-          title={item.nombre}
+          className="cursor-pointer text-center"
         >
-          {item.emoji}
-          <p className="text-sm mt-1">{item.nombre}</p>
+          <div className="text-4xl">{item.emoji}</div>
+          <div className="text-sm">{item.nombre}</div>
         </div>
       ))}
     </div>
