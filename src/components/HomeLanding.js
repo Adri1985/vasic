@@ -20,6 +20,29 @@ function HomeLanding() {
   const [verduras, setVerduras] = useState([]);
   const [carrousel, setCarrousel] = useState(initialCarrousel);
 
+  // Obtener la suscripción del usuario
+  const fetchSubscription = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Usuario no autenticado. Por favor inicia sesión.');
+        return;
+      }
+
+      const response = await axios.get('https://vasci-be.onrender.com/api/subscription', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setVerduras(response.data.subscription);
+    } catch (error) {
+      console.error('Error al cargar la suscripción:', error);
+      alert('No se pudo cargar la suscripción.');
+    }
+  }, []);
+
+  // Inicializar la suscripción del usuario
   const initializeSubscription = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
@@ -38,36 +61,19 @@ function HomeLanding() {
         }
       );
 
-      fetchSubscription();
+      console.log('Suscripción inicializada con éxito');
+      fetchSubscription(); // Llamar a fetchSubscription para cargar los datos
     } catch (error) {
       console.error('Error al inicializar la suscripción:', error);
     }
-  }, []);
+  }, [fetchSubscription]); // Agregar fetchSubscription como dependencia
 
-  const fetchSubscription = useCallback(async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        alert('Usuario no autenticado. Por favor inicia sesión.');
-        return;
-      }
-
-      const response = await axios.get('https://vasci-be.onrender.com/api/subscription', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      setVerduras(response.data.subscription);
-    } catch (error) {
-      console.error('Error al cargar la suscripción:', error);
-    }
-  }, []);
-
+  // Cargar la suscripción al montar el componente
   useEffect(() => {
     initializeSubscription();
   }, [initializeSubscription]);
 
+  // Agregar un producto a la suscripción
   const handleAddVerdura = async (item) => {
     if (verduras.length >= 6) {
       alert('¡Máximo de 6 verduras!');
@@ -88,9 +94,11 @@ function HomeLanding() {
       setCarrousel((prev) => prev.filter((i) => i.id !== item.id));
     } catch (error) {
       console.error('Error al agregar el producto:', error);
+      alert('No se pudo agregar el producto a la suscripción.');
     }
   };
 
+  // Actualizar el peso del producto
   const handleUpdatePeso = async (id, nuevoPeso) => {
     try {
       const token = localStorage.getItem('token');
@@ -114,6 +122,7 @@ function HomeLanding() {
     }
   };
 
+  // Eliminar un producto de la suscripción
   const handleRemoveVerdura = async (id) => {
     try {
       const token = localStorage.getItem('token');
