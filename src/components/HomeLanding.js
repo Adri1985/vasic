@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import Header from './Header';
 import ProductCard from './ProductCard';
@@ -17,11 +17,10 @@ const initialCarrousel = [
 ];
 
 function HomeLanding() {
-  const [verduras, setVerduras] = useState([]); // Verduras en la suscripción del usuario
+  const [verduras, setVerduras] = useState([]);
   const [carrousel, setCarrousel] = useState(initialCarrousel);
 
-  // Inicializar la suscripción del usuario
-  const initializeSubscription = async () => {
+  const initializeSubscription = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -29,7 +28,6 @@ function HomeLanding() {
         return;
       }
 
-      // Llamar al endpoint /init
       await axios.post(
         'https://vasci-be.onrender.com/api/subscription/init',
         {},
@@ -40,16 +38,13 @@ function HomeLanding() {
         }
       );
 
-      console.log('Suscripción inicializada con éxito');
-      fetchSubscription(); // Cargar la suscripción después de inicializarla
+      fetchSubscription();
     } catch (error) {
       console.error('Error al inicializar la suscripción:', error);
-      alert('No se pudo inicializar la suscripción.');
     }
-  };
+  }, []);
 
-  // Obtener la suscripción del usuario
-  const fetchSubscription = async () => {
+  const fetchSubscription = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -63,51 +58,39 @@ function HomeLanding() {
         },
       });
 
-      setVerduras(response.data.subscription); // Actualizar las verduras con los datos del backend
+      setVerduras(response.data.subscription);
     } catch (error) {
       console.error('Error al cargar la suscripción:', error);
-      alert('No se pudo cargar la suscripción.');
     }
-  };
+  }, []);
 
-  // Agregar un producto a la suscripción
+  useEffect(() => {
+    initializeSubscription();
+  }, [initializeSubscription]);
+
   const handleAddVerdura = async (item) => {
     if (verduras.length >= 6) {
       alert('¡Máximo de 6 verduras!');
       return;
     }
-  
+
     try {
       const token = localStorage.getItem('token');
-  
-      // Producto con peso inicial
-      const producto = {
-        id: item.id,
-        nombre: item.nombre,
-        emoji: item.emoji,
-        peso: 500, // Peso inicial
-      };
-  
-      console.log('Producto enviado al backend:', producto);
-  
-      // Enviar al backend
+      const producto = { ...item, peso: 500 };
+
       await axios.post('https://vasci-be.onrender.com/api/subscription/add', producto, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-  
-      // Actualizar estado
+
       setVerduras((prev) => [...prev, producto]);
       setCarrousel((prev) => prev.filter((i) => i.id !== item.id));
     } catch (error) {
       console.error('Error al agregar el producto:', error);
-      alert('No se pudo agregar el producto a la suscripción.');
     }
   };
-  
 
-  // Actualizar el peso del producto en la suscripción
   const handleUpdatePeso = async (id, nuevoPeso) => {
     try {
       const token = localStorage.getItem('token');
@@ -128,11 +111,9 @@ function HomeLanding() {
       );
     } catch (error) {
       console.error('Error al actualizar el peso:', error);
-      alert('No se pudo actualizar el peso del producto.');
     }
   };
 
-  // Eliminar un producto de la suscripción
   const handleRemoveVerdura = async (id) => {
     try {
       const token = localStorage.getItem('token');
@@ -151,14 +132,8 @@ function HomeLanding() {
       setCarrousel((prev) => [...prev, removedProduct]);
     } catch (error) {
       console.error('Error al eliminar la verdura:', error);
-      alert('No se pudo eliminar la verdura de la suscripción.');
     }
   };
-
-  // Cargar la suscripción al montar el componente
-  useEffect(() => {
-    initializeSubscription();
-  }, []);
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
