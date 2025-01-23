@@ -31,7 +31,7 @@ function HomeLanding() {
 
       // Llamar al endpoint /init
       await axios.post(
-        'http://localhost:3000/api/subscription/init',
+        'https://vasci-be.onrender.com/api/subscription/init',
         {},
         {
           headers: {
@@ -57,7 +57,7 @@ function HomeLanding() {
         return;
       }
 
-      const response = await axios.get('http://localhost:3000/api/subscription', {
+      const response = await axios.get('https://vasci-be.onrender.com/api/subscription', {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -91,7 +91,7 @@ function HomeLanding() {
       console.log('Producto enviado al backend:', producto);
   
       // Enviar al backend
-      await axios.post('http://localhost:3000/api/subscription/add', producto, {
+      await axios.post('https://vasci-be.onrender.com/api/subscription/add', producto, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -112,7 +112,7 @@ function HomeLanding() {
     try {
       const token = localStorage.getItem('token');
       await axios.post(
-        'http://localhost:3000/api/subscription/update',
+        'https://vasci-be.onrender.com/api/subscription/update',
         { id, peso: nuevoPeso },
         {
           headers: {
@@ -137,7 +137,7 @@ function HomeLanding() {
     try {
       const token = localStorage.getItem('token');
       await axios.post(
-        'http://localhost:3000/api/subscription/remove',
+        'https://vasci-be.onrender.com/api/subscription/remove',
         { id },
         {
           headers: {

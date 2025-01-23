@@ -20,7 +20,7 @@ const LoginPage = () => {
     try {
       console.log('Registrando usuario con:', { email, password });
 
-      const response = await axios.post('http://localhost:3000/api/auth/register', {
+      const response = await axios.post('https://vasci-be.onrender.com/api/auth/register', {
         email,
         password,
       });
@@ -51,7 +51,7 @@ const LoginPage = () => {
     try {
       console.log('Iniciando sesión con:', { email, password });
 
-      const response = await axios.post('http://localhost:3000/api/auth/login', {
+      const response = await axios.post('https://vasci-be.onrender.com/api/auth/login', {
         email,
         password,
       });
