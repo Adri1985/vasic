@@ -20,30 +20,6 @@ function HomeLanding() {
   const [verduras, setVerduras] = useState([]);
   const [carrousel, setCarrousel] = useState(initialCarrousel);
 
-  // Inicializar la suscripción del usuario
-  const initializeSubscription = useCallback(async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        alert('Usuario no autenticado. Por favor inicia sesión.');
-        return;
-      }
-
-      await axios.post(
-        'https://vasci-be.onrender.com/api/subscription/init',
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      fetchSubscription();
-    } catch (error) {
-      console.error('Error al inicializar la suscripción:', error);
-      alert('No se pudo inicializar la suscripción.');
-    }
-  }, []);
-
   // Obtener la suscripción del usuario
   const fetchSubscription = useCallback(async () => {
     try {
@@ -68,6 +44,30 @@ function HomeLanding() {
       alert('No se pudo cargar la suscripción.');
     }
   }, []);
+
+  // Inicializar la suscripción del usuario
+  const initializeSubscription = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('Usuario no autenticado. Por favor inicia sesión.');
+        return;
+      }
+
+      await axios.post(
+        'https://vasci-be.onrender.com/api/subscription/init',
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      fetchSubscription(); // Llamar fetchSubscription después de inicializar
+    } catch (error) {
+      console.error('Error al inicializar la suscripción:', error);
+      alert('No se pudo inicializar la suscripción.');
+    }
+  }, [fetchSubscription]); // Agregar fetchSubscription como dependencia
 
   const handleAddVerdura = async (item) => {
     if (verduras.length >= 6) {
