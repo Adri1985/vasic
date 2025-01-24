@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import Header from './Header';
 import ProductCard from './ProductCard';
@@ -20,7 +20,8 @@ function HomeLanding() {
   const [verduras, setVerduras] = useState([]);
   const [carrousel, setCarrousel] = useState(initialCarrousel);
 
-  const initializeSubscription = async () => {
+  // Inicializar la suscripción del usuario
+  const initializeSubscription = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -41,9 +42,10 @@ function HomeLanding() {
       console.error('Error al inicializar la suscripción:', error);
       alert('No se pudo inicializar la suscripción.');
     }
-  };
+  }, []);
 
-  const fetchSubscription = async () => {
+  // Obtener la suscripción del usuario
+  const fetchSubscription = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -55,7 +57,6 @@ function HomeLanding() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // Vincular `cantidadPorKg` a cada producto de la suscripción
       const updatedVerduras = response.data.subscription.map((item) => {
         const matchedItem = initialCarrousel.find((c) => c.id === item.id);
         return matchedItem ? { ...item, cantidadPorKg: matchedItem.cantidadPorKg } : item;
@@ -66,7 +67,7 @@ function HomeLanding() {
       console.error('Error al cargar la suscripción:', error);
       alert('No se pudo cargar la suscripción.');
     }
-  };
+  }, []);
 
   const handleAddVerdura = async (item) => {
     if (verduras.length >= 6) {
@@ -119,7 +120,7 @@ function HomeLanding() {
 
   useEffect(() => {
     initializeSubscription();
-  }, []);
+  }, [initializeSubscription]);
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
