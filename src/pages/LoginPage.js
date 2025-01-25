@@ -8,7 +8,7 @@ const LoginPage = () => {
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [user, setUser] = useState(null); // Estado para almacenar los datos del usuario
+  const [user, setUser] = useState(null); // Estado inicial del usuario como null
   const [error, setError] = useState('');
   const navigate = useNavigate();
   const API_URL = process.env.REACT_APP_API_URL;
@@ -40,6 +40,7 @@ const LoginPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
+      {/* Pasar los datos del usuario al Header */}
       <Header user={user} />
       <div className="flex-1 flex items-center justify-center px-4">
         <div className="bg-white p-6 rounded shadow max-w-md w-full">

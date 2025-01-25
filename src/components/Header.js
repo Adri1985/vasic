@@ -11,7 +11,7 @@ const Header = ({ user }) => {
   return (
     <header className="bg-green-600 text-white py-4 px-6 flex justify-between items-center">
       <h1 className="text-2xl font-bold">Bienvenido a VASIC 🌿</h1>
-      {user && (
+      {user ? (
         <div className="relative">
           <button
             onClick={toggleModal}
@@ -22,6 +22,8 @@ const Header = ({ user }) => {
           </button>
           {isModalOpen && <UserModal user={user} onClose={toggleModal} />}
         </div>
+      ) : (
+        <span className="text-sm">Inicia sesión para ver tu perfil</span>
       )}
     </header>
   );
