@@ -2,155 +2,95 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Header from '../components/Header';
+import RegistrationForm from '../components/RegistrationForm';
 
 const LoginPage = () => {
-  const [isRegister, setIsRegister] = useState(true); // Estado para alternar entre Register y Login
+  const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [user, setUser] = useState(null); // Estado para almacenar los datos del usuario
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const navigate = useNavigate();
+  const API_URL = process.env.REACT_APP_API_URL;
 
-  // Manejar registro
-  const handleRegister = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
-
     try {
-      console.log('Registrando usuario con:', { email, password });
+      const response = await axios.post(`${API_URL}/api/auth/login`, { email, password });
 
-      const response = await axios.post('https://vasci-be.onrender.com/api/auth/register', {
-        email,
-        password,
-      });
+      // Guardar los datos del usuario en el estado
+      setUser(response.data.user);
 
-      console.log('Respuesta del servidor:', response.data);
-
-      setSuccess('Usuario registrado con éxito. ¡Ahora puedes iniciar sesión!');
-      setEmail('');
-      setPassword('');
-      setIsRegister(false); // Cambiar a Login después de registrar
+      // Redirigir al home
+      navigate('/home');
     } catch (err) {
-      console.error('Error al registrar usuario:', err);
-
-      if (err.response && err.response.data) {
-        setError(err.response.data.message);
-      } else {
-        setError('Error al registrar usuario. Inténtalo nuevamente.');
-      }
+      setError('Error al iniciar sesión. Verifica tus credenciales.');
     }
   };
 
-  // Manejar login
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-
+  const handleRegister = async (formData) => {
     try {
-      console.log('Iniciando sesión con:', { email, password });
-
-      const response = await axios.post('https://vasci-be.onrender.com/api/auth/login', {
-        email,
-        password,
-      });
-
-      console.log('Respuesta del servidor:', response.data);
-
-      localStorage.setItem('token', response.data.token); // Guardar el token
-      navigate('/home'); // Redirigir a HomeLanding
+      await axios.post(`${API_URL}/api/auth/register`, formData);
+      alert('Usuario registrado con éxito. ¡Ahora puedes iniciar sesión!');
+      setIsRegister(false);
     } catch (err) {
-      console.error('Error al iniciar sesión:', err);
-
-      if (err.response && err.response.data) {
-        setError(err.response.data.message);
-      } else {
-        setError('Error al iniciar sesión. Inténtalo nuevamente.');
-      }
+      setError('Error al registrarte. Intenta de nuevo.');
     }
   };
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
-      <Header />
-
+      <Header user={user} />
       <div className="flex-1 flex items-center justify-center px-4">
         <div className="bg-white p-6 rounded shadow max-w-md w-full">
-          <h2 className="text-2xl font-bold mb-4 text-center text-green-600">
-            {isRegister ? 'Registrarse' : 'Iniciar Sesión'}
-          </h2>
-
-          {error && (
-            <div className="mb-4 text-red-600 text-center">
-              {error}
-            </div>
+          {isRegister ? (
+            <RegistrationForm handleRegister={handleRegister} />
+          ) : (
+            <form onSubmit={handleLogin} className="space-y-4">
+              <h2 className="text-2xl font-bold text-center text-green-600 mb-4">Iniciar Sesión</h2>
+              {error && <div className="text-red-600 text-center">{error}</div>}
+              <div>
+                <label className="block mb-1 font-medium">Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full border p-2 rounded focus:outline-none focus:border-green-600"
+                />
+              </div>
+              <div>
+                <label className="block mb-1 font-medium">Contraseña</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full border p-2 rounded focus:outline-none focus:border-green-600"
+                />
+              </div>
+              <button className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">
+                Iniciar Sesión
+              </button>
+            </form>
           )}
-
-          {success && (
-            <div className="mb-4 text-green-600 text-center">
-              {success}
-            </div>
-          )}
-
-          {/* Formulario de Register/Login */}
-          <form onSubmit={(e) => (isRegister ? handleRegister(e) : handleLogin(e))} className="space-y-4">
-            <div>
-              <label className="block mb-1 font-medium" htmlFor="email">
-                Email
-              </label>
-              <input
-                type="email"
-                id="email"
-                className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:border-green-600"
-                placeholder="Ingresa tu correo"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-
-            <div>
-              <label className="block mb-1 font-medium" htmlFor="password">
-                Contraseña
-              </label>
-              <input
-                type="password"
-                id="password"
-                className="w-full border border-gray-300 p-2 rounded focus:outline-none focus:border-green-600"
-                placeholder={isRegister ? 'Crea una contraseña' : 'Ingresa tu contraseña'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-
-            <button
-              type="submit"
-              className="block w-full text-center bg-green-600 text-white py-2 rounded hover:bg-green-700 transition-colors"
-            >
-              {isRegister ? 'Registrarse' : 'Iniciar Sesión'}
-            </button>
-          </form>
-
-          {/* Enlace para alternar entre Register y Login */}
           <p className="mt-4 text-center text-sm">
             {isRegister ? (
               <>
-                ¿Ya sos miembro?{' '}
+                ¿Ya tienes cuenta?{' '}
                 <span
-                  onClick={() => setIsRegister(false)}
                   className="text-green-600 cursor-pointer hover:underline"
+                  onClick={() => setIsRegister(false)}
                 >
-                  Ingresa aquí
+                  Inicia sesión
                 </span>
               </>
             ) : (
               <>
-                ¿No tienes una cuenta?{' '}
+                ¿No tienes cuenta?{' '}
                 <span
-                  onClick={() => setIsRegister(true)}
                   className="text-green-600 cursor-pointer hover:underline"
+                  onClick={() => setIsRegister(true)}
                 >
-                  Regístrate aquí
+                  Regístrate
                 </span>
               </>
             )}

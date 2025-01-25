@@ -3,6 +3,8 @@ import axios from 'axios';
 import Header from './Header';
 import ProductCard from './ProductCard';
 
+const API_URL = process.env.REACT_APP_API_URL;
+
 const initialCarrousel = [
   { id: 101, nombre: 'Choclo', emoji: '🌽', cantidadPorKg: 4 },
   { id: 102, nombre: 'Brócoli', emoji: '🥦', cantidadPorKg: 6 },
@@ -12,15 +14,14 @@ const initialCarrousel = [
   { id: 106, nombre: 'Champiñón', emoji: '🍄', cantidadPorKg: 8 },
   { id: 107, nombre: 'Ajo', emoji: '🧄', cantidadPorKg: 12 },
   { id: 108, nombre: 'Pimiento', emoji: '🫑', cantidadPorKg: 3 },
-  { id: 109, nombre: 'Arvejas', emoji: '🫘', cantidadPorKg: 15 },
-  { id: 110, nombre: 'Zucchini', emoji: '🥒', cantidadPorKg: 2 },
+  { id: 109, nombre: 'Lechuga', emoji: '🥬', cantidadPorKg: 15 },
+  { id: 110, nombre: 'Cebollas', emoji: '🧅', cantidadPorKg: 6 },
 ];
 
 function HomeLanding() {
   const [verduras, setVerduras] = useState([]);
-  const [carrousel, setCarrousel] = useState(initialCarrousel);
+  const [filteredCarrousel, setFilteredCarrousel] = useState(initialCarrousel);
 
-  // Obtener la suscripción del usuario
   const fetchSubscription = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
@@ -29,7 +30,7 @@ function HomeLanding() {
         return;
       }
 
-      const response = await axios.get('https://vasci-be.onrender.com/api/subscription', {
+      const response = await axios.get(`${API_URL}/api/subscription`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -39,13 +40,19 @@ function HomeLanding() {
       });
 
       setVerduras(updatedVerduras);
+
+      // Filtrar el carrusel
+      const updatedCarrousel = initialCarrousel.filter(
+        (carrouselItem) => !updatedVerduras.some((verdura) => verdura.id === carrouselItem.id)
+      );
+
+      setFilteredCarrousel(updatedCarrousel);
     } catch (error) {
       console.error('Error al cargar la suscripción:', error);
       alert('No se pudo cargar la suscripción.');
     }
   }, []);
 
-  // Inicializar la suscripción del usuario
   const initializeSubscription = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
@@ -54,20 +61,16 @@ function HomeLanding() {
         return;
       }
 
-      await axios.post(
-        'https://vasci-be.onrender.com/api/subscription/init',
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      await axios.post(`${API_URL}/api/subscription/init`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-      fetchSubscription(); // Llamar fetchSubscription después de inicializar
+      fetchSubscription();
     } catch (error) {
       console.error('Error al inicializar la suscripción:', error);
       alert('No se pudo inicializar la suscripción.');
     }
-  }, [fetchSubscription]); // Agregar fetchSubscription como dependencia
+  }, [fetchSubscription]);
 
   const handleAddVerdura = async (item) => {
     if (verduras.length >= 6) {
@@ -77,21 +80,17 @@ function HomeLanding() {
 
     try {
       const token = localStorage.getItem('token');
+      const producto = { id: item.id, nombre: item.nombre, emoji: item.emoji, peso: 500 };
 
-      const producto = {
-        id: item.id,
-        nombre: item.nombre,
-        emoji: item.emoji,
-        peso: 500,
-      };
-
-      await axios.post('https://vasci-be.onrender.com/api/subscription/add', producto, {
+      await axios.post(`${API_URL}/api/subscription/add`, producto, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       const updatedItem = { ...producto, cantidadPorKg: item.cantidadPorKg };
       setVerduras((prev) => [...prev, updatedItem]);
-      setCarrousel((prev) => prev.filter((i) => i.id !== item.id));
+
+      // Actualizar el carrusel
+      setFilteredCarrousel((prev) => prev.filter((i) => i.id !== item.id));
     } catch (error) {
       console.error('Error al agregar el producto:', error);
       alert('No se pudo agregar el producto a la suscripción.');
@@ -101,17 +100,15 @@ function HomeLanding() {
   const handleRemoveVerdura = async (id) => {
     try {
       const token = localStorage.getItem('token');
-      await axios.post(
-        'https://vasci-be.onrender.com/api/subscription/remove',
-        { id },
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      await axios.post(`${API_URL}/api/subscription/remove`, { id }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       const removedProduct = verduras.find((item) => item.id === id);
       setVerduras((prev) => prev.filter((item) => item.id !== id));
-      setCarrousel((prev) => [...prev, removedProduct]);
+
+      // Actualizar el carrusel
+      setFilteredCarrousel((prev) => [...prev, removedProduct]);
     } catch (error) {
       console.error('Error al eliminar la verdura:', error);
       alert('No se pudo eliminar la verdura de la suscripción.');
@@ -135,7 +132,7 @@ function HomeLanding() {
           <ProductsGrid verduras={verduras} onRemove={handleRemoveVerdura} />
         </div>
         <div className="flex-none bg-gray-100 mt-4" style={{ height: '30%' }}>
-          <CarrouselResponsive items={carrousel} onClickItem={handleAddVerdura} />
+          <CarrouselResponsive items={filteredCarrousel} onClickItem={handleAddVerdura} />
         </div>
       </div>
     </div>
