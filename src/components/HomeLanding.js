@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import { useUserContext } from '../contexts/UserContext';
 import Header from '../components/Header';
 import ProductCard from '../components/ProductCard';
 
@@ -20,20 +19,28 @@ const initialCarrousel = [
 function HomeLanding() {
   const [verduras, setVerduras] = useState([]); // Suscripción del usuario
   const [carrousel, setCarrousel] = useState([]); // Elementos disponibles en el carrusel
-  const { token, user } = useUserContext();
+  const [loading, setLoading] = useState(false); // Estado de carga
+  const [fetched, setFetched] = useState(false); // Estado para evitar bucles
+
+  // Leer el token desde localStorage
+  const token = localStorage.getItem('token');
+  const user = JSON.parse(localStorage.getItem('user')); // Leer el usuario desde localStorage
 
   // Obtener la suscripción del usuario
   const fetchSubscription = useCallback(async () => {
-    try {
-      if (!token) {
-        console.error('Usuario no autenticado.');
-        return;
-      }
+    if (!token) {
+      console.error('Token no disponible.');
+      return;
+    }
 
+    setLoading(true); // Iniciar la carga
+    try {
+      console.log("token que se envia en header", token);
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/subscription`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
+      // Mapear los datos de la respuesta para actualizar las verduras con los datos del carrusel
       const updatedVerduras = response.data.subscription.map((item) => {
         const matchedItem = initialCarrousel.find((c) => c.id === item.id);
         return matchedItem ? { ...item, cantidadPorKg: matchedItem.cantidadPorKg } : item;
@@ -41,37 +48,26 @@ function HomeLanding() {
 
       setVerduras(updatedVerduras);
 
-      // Actualizar el carrusel excluyendo los elementos de la suscripción
+      // Excluir los elementos de la suscripción del carrusel
       const filteredCarrousel = initialCarrousel.filter(
         (item) => !updatedVerduras.some((v) => v.id === item.id)
       );
+
       setCarrousel(filteredCarrousel);
     } catch (error) {
       console.error('Error al cargar la suscripción:', error);
+    } finally {
+      setLoading(false); // Finalizar la carga
+      setFetched(true); // Cambiar el estado de `fetched` para evitar más ejecuciones
     }
   }, [token]);
 
-  // Inicializar la suscripción solo para un usuario nuevo
-  const initializeSubscription = useCallback(async () => {
-    try {
-      if (!token) {
-        console.error('Usuario no autenticado.');
-        return;
-      }
-
-      await axios.post(
-        `${process.env.REACT_APP_API_URL}/api/subscription/init`,
-        {},
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
+  // Usar useEffect para llamar fetchSubscription solo cuando el token esté disponible
+  useEffect(() => {
+    if (token && user && !fetched) { // Solo ejecutar si no se ha realizado la carga
       fetchSubscription();
-    } catch (error) {
-      console.error('Error al inicializar la suscripción:', error);
     }
-  }, [token, fetchSubscription]);
+  }, [token, user, fetched, fetchSubscription]); // `fetched` ahora controla las ejecuciones
 
   const handleAddVerdura = async (item) => {
     if (verduras.length >= 6) {
@@ -116,12 +112,6 @@ function HomeLanding() {
     }
   };
 
-  useEffect(() => {
-    if (user && token) {
-      fetchSubscription();
-    }
-  }, [user, token, fetchSubscription]);
-
   return (
     <div className="h-screen flex flex-col overflow-hidden">
       <Header />
@@ -132,7 +122,11 @@ function HomeLanding() {
           </h2>
         </div>
         <div className="flex-none overflow-y-auto bg-gray-50 pb-4" style={{ height: '55%' }}>
-          <ProductsGrid verduras={verduras} onRemove={handleRemoveVerdura} />
+          {loading ? (
+            <div className="text-center">Cargando...</div>
+          ) : (
+            <ProductsGrid verduras={verduras} onRemove={handleRemoveVerdura} />
+          )}
         </div>
         <div className="flex-none bg-gray-100 mt-4" style={{ height: '30%' }}>
           <CarrouselResponsive items={carrousel} onClickItem={handleAddVerdura} />

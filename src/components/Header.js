@@ -1,10 +1,22 @@
 import React, { useState } from 'react';
-import { useUserContext } from '../contexts/UserContext';
+import { useNavigate } from 'react-router-dom'; // Necesitamos usar navigate para redirigir
 import UserModal from './UserModal';
 
 const Header = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { user, logout } = useUserContext();
+  const navigate = useNavigate();
+
+  // Leer el usuario desde localStorage
+  const user = JSON.parse(localStorage.getItem('user')); // Leer el usuario desde localStorage
+
+  console.log("user en header",user)
+
+  // Función para cerrar sesión
+  const logout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/'); // Redirige al login (página inicial)
+  };
 
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);

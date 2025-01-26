@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useUserContext } from '../contexts/UserContext';
 import axios from 'axios';
 import Header from '../components/Header';
 import RegistrationForm from '../components/RegistrationForm';
@@ -10,23 +9,41 @@ const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { login } = useUserContext();
   const API_URL = process.env.REACT_APP_API_URL;
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setLoading(true);  // Iniciar el estado de carga
     try {
       setError(''); // Limpiar error antes de intentar el login
       const response = await axios.post(`${API_URL}/api/auth/login`, { email, password });
-
+  
       const { token, user } = response.data;
-      login(token, user); // Guardar el token y los datos del usuario en el contexto
-      navigate('/home'); // Redirigir al home
+      console.log(user);
+      console.log(token);
+
+      // Guardar el token y usuario en localStorage
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+
+      // Redirigir a la página de inicio
+      navigate('/home'); // Redirigir al home solo después de que el login esté completo
     } catch (err) {
       setError('Error al iniciar sesión. Verifica tus credenciales.');
+    } finally {
+      setLoading(false);  // Finalizar el estado de carga
     }
   };
+
+  // Verificar si el usuario ya está autenticado en el localStorage
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      navigate('/home'); // Redirigir si el usuario ya tiene un token válido
+    }
+  }, [navigate]);
 
   const handleRegister = async (formData) => {
     try {
@@ -67,8 +84,8 @@ const LoginPage = () => {
                   className="w-full border p-2 rounded focus:outline-none focus:border-green-600"
                 />
               </div>
-              <button className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">
-                Iniciar Sesión
+              <button className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700" disabled={loading}>
+                {loading ? 'Cargando...' : 'Iniciar Sesión'}
               </button>
             </form>
           )}
