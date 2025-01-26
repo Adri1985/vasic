@@ -27,6 +27,18 @@ export const UserProvider = ({ children }) => {
     }
   };
 
+
+  const fetchUserData = async (token) => {
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/user`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setUser(response.data.user);
+    } catch (error) {
+      console.error('Error al obtener los datos del usuario:', error);
+    }
+  };
+  
   const login = (token, user) => {
     localStorage.setItem('token', token);
     setToken(token);
