@@ -1,11 +1,10 @@
-// Header.js actualizado
 import React, { useState } from 'react';
 import { useUserContext } from '../contexts/UserContext';
 import UserModal from './UserModal';
 
 const Header = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { user } = useUserContext();
+  const { user, logout } = useUserContext();
 
   const toggleModal = () => {
     setIsModalOpen(!isModalOpen);
@@ -23,7 +22,9 @@ const Header = () => {
           >
             👤
           </button>
-          {isModalOpen && <UserModal user={user} onClose={toggleModal} />}
+          {isModalOpen && (
+            <UserModal user={user} onClose={toggleModal} onLogout={logout} />
+          )}
         </div>
       )}
     </header>
