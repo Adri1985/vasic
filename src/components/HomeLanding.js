@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
-import Header from './Header';
-import ProductCard from './ProductCard';
-
-const API_URL = process.env.REACT_APP_API_URL;
+import { useUserContext } from '../contexts/UserContext';
+import Header from '../components/Header';
+import ProductCard from '../components/ProductCard';
 
 const initialCarrousel = [
   { id: 101, nombre: 'Choclo', emoji: '🌽', cantidadPorKg: 4 },
@@ -19,18 +18,19 @@ const initialCarrousel = [
 ];
 
 function HomeLanding() {
-  const [verduras, setVerduras] = useState([]);
-  const [filteredCarrousel, setFilteredCarrousel] = useState(initialCarrousel);
+  const [verduras, setVerduras] = useState([]); // Suscripción del usuario
+  const [carrousel, setCarrousel] = useState([]); // Elementos disponibles en el carrusel
+  const { token, user } = useUserContext();
 
+  // Obtener la suscripción del usuario
   const fetchSubscription = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token');
       if (!token) {
-        alert('Usuario no autenticado. Por favor inicia sesión.');
+        console.error('Usuario no autenticado.');
         return;
       }
 
-      const response = await axios.get(`${API_URL}/api/subscription`, {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/subscription`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -41,36 +41,37 @@ function HomeLanding() {
 
       setVerduras(updatedVerduras);
 
-      // Filtrar el carrusel
-      const updatedCarrousel = initialCarrousel.filter(
-        (carrouselItem) => !updatedVerduras.some((verdura) => verdura.id === carrouselItem.id)
+      // Actualizar el carrusel excluyendo los elementos de la suscripción
+      const filteredCarrousel = initialCarrousel.filter(
+        (item) => !updatedVerduras.some((v) => v.id === item.id)
       );
-
-      setFilteredCarrousel(updatedCarrousel);
+      setCarrousel(filteredCarrousel);
     } catch (error) {
       console.error('Error al cargar la suscripción:', error);
-      alert('No se pudo cargar la suscripción.');
     }
-  }, []);
+  }, [token]);
 
+  // Inicializar la suscripción solo para un usuario nuevo
   const initializeSubscription = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token');
       if (!token) {
-        alert('Usuario no autenticado. Por favor inicia sesión.');
+        console.error('Usuario no autenticado.');
         return;
       }
 
-      await axios.post(`${API_URL}/api/subscription/init`, {}, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/subscription/init`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       fetchSubscription();
     } catch (error) {
       console.error('Error al inicializar la suscripción:', error);
-      alert('No se pudo inicializar la suscripción.');
     }
-  }, [fetchSubscription]);
+  }, [token, fetchSubscription]);
 
   const handleAddVerdura = async (item) => {
     if (verduras.length >= 6) {
@@ -79,45 +80,47 @@ function HomeLanding() {
     }
 
     try {
-      const token = localStorage.getItem('token');
       const producto = { id: item.id, nombre: item.nombre, emoji: item.emoji, peso: 500 };
 
-      await axios.post(`${API_URL}/api/subscription/add`, producto, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/subscription/add`,
+        producto,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       const updatedItem = { ...producto, cantidadPorKg: item.cantidadPorKg };
       setVerduras((prev) => [...prev, updatedItem]);
-
-      // Actualizar el carrusel
-      setFilteredCarrousel((prev) => prev.filter((i) => i.id !== item.id));
+      setCarrousel((prev) => prev.filter((i) => i.id !== item.id));
     } catch (error) {
       console.error('Error al agregar el producto:', error);
-      alert('No se pudo agregar el producto a la suscripción.');
     }
   };
 
   const handleRemoveVerdura = async (id) => {
     try {
-      const token = localStorage.getItem('token');
-      await axios.post(`${API_URL}/api/subscription/remove`, { id }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/subscription/remove`,
+        { id },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
 
       const removedProduct = verduras.find((item) => item.id === id);
       setVerduras((prev) => prev.filter((item) => item.id !== id));
-
-      // Actualizar el carrusel
-      setFilteredCarrousel((prev) => [...prev, removedProduct]);
+      setCarrousel((prev) => [...prev, removedProduct]);
     } catch (error) {
       console.error('Error al eliminar la verdura:', error);
-      alert('No se pudo eliminar la verdura de la suscripción.');
     }
   };
 
   useEffect(() => {
-    initializeSubscription();
-  }, [initializeSubscription]);
+    if (user && token) {
+      fetchSubscription();
+    }
+  }, [user, token, fetchSubscription]);
 
   return (
     <div className="h-screen flex flex-col overflow-hidden">
@@ -132,7 +135,7 @@ function HomeLanding() {
           <ProductsGrid verduras={verduras} onRemove={handleRemoveVerdura} />
         </div>
         <div className="flex-none bg-gray-100 mt-4" style={{ height: '30%' }}>
-          <CarrouselResponsive items={filteredCarrousel} onClickItem={handleAddVerdura} />
+          <CarrouselResponsive items={carrousel} onClickItem={handleAddVerdura} />
         </div>
       </div>
     </div>

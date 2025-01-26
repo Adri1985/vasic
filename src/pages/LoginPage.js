@@ -17,10 +17,11 @@ const LoginPage = () => {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
+      setError(''); // Limpiar error antes de intentar el login
       const response = await axios.post(`${API_URL}/api/auth/login`, { email, password });
-      const { token, user } = response.data;
 
-      login(token, user); // Guardar token y datos del usuario en el contexto
+      const { token, user } = response.data;
+      login(token, user); // Guardar el token y los datos del usuario en el contexto
       navigate('/home'); // Redirigir al home
     } catch (err) {
       setError('Error al iniciar sesión. Verifica tus credenciales.');
