@@ -1,21 +1,25 @@
-import React, { createContext, useState } from 'react';
+// Actualizaremos el archivo UserContext.js para incluir los exports correctos y asegurarnos de que el context funcione correctamente.
 
-// Crear el contexto del usuario
-export const UserContext = createContext();
+import React, { createContext, useContext, useState } from 'react';
 
-// Proveedor del contexto
+const UserContext = createContext();
+
 export const UserProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // Estado para almacenar los datos del usuario
-  const [loading, setLoading] = useState(false); // Estado para manejar el cargando
-
-  // Función para actualizar los datos del usuario
-  const updateUser = (userData) => {
-    setUser(userData);
-  };
+  const [user, setUser] = useState(null);
 
   return (
-    <UserContext.Provider value={{ user, updateUser, loading, setLoading }}>
+    <UserContext.Provider value={{ user, setUser }}>
       {children}
     </UserContext.Provider>
   );
 };
+
+export const useUserContext = () => {
+  const context = useContext(UserContext);
+  if (!context) {
+    throw new Error('useUserContext must be used within a UserProvider');
+  }
+  return context;
+};
+
+export default UserContext;

@@ -1,19 +1,21 @@
+// Archivo App.js actualizado para reflejar la estructura correcta del repositorio
+
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { UserContextProvider } from './contexts/UserContext'; // Importa el provider del contexto
-import HomeLanding from './pages/HomeLanding';
-import LoginPage from './pages/LoginPage';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import LoginPage from './pages/LoginPage'; // Confirmamos que LoginPage esté en pages
+import HomeLanding from './components/HomeLanding'; // Confirmamos que HomeLanding esté en components
+import { UserProvider } from './contexts/UserContext';
 
 function App() {
   return (
-    <UserContextProvider>
+    <UserProvider>
       <Router>
         <Routes>
-          <Route path="/home" element={<HomeLanding />} />
           <Route path="/" element={<LoginPage />} />
+          <Route path="/home" element={<HomeLanding />} />
         </Routes>
       </Router>
-    </UserContextProvider>
+    </UserProvider>
   );
 }
 

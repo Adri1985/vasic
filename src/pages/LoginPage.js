@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useUserContext } from '../contexts/UserContext';
 import Header from '../components/Header';
 import RegistrationForm from '../components/RegistrationForm';
-import { useUserContext } from '../contexts/UserContext'; // Importa el contexto
 
 const LoginPage = () => {
+  const { setUser } = useUserContext();
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -13,36 +14,19 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const API_URL = process.env.REACT_APP_API_URL;
 
-  const { setUser } = useUserContext(); // Obtén el setter del contexto
-
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
       const response = await axios.post(`${API_URL}/api/auth/login`, { email, password });
-
-      // Actualiza el estado global del usuario con el contexto
       setUser(response.data.user);
-
-      // Redirige al home
       navigate('/home');
     } catch (err) {
       setError('Error al iniciar sesión. Verifica tus credenciales.');
     }
   };
 
-  const handleRegister = async (formData) => {
-    try {
-      await axios.post(`${API_URL}/api/auth/register`, formData);
-      alert('Usuario registrado con éxito. ¡Ahora puedes iniciar sesión!');
-      setIsRegister(false);
-    } catch (err) {
-      setError('Error al registrarte. Intenta de nuevo.');
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
-      {/* Pasar los datos del usuario al Header */}
       <Header />
       <div className="flex-1 flex items-center justify-center px-4">
         <div className="bg-white p-6 rounded shadow max-w-md w-full">
