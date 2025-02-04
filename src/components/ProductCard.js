@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import ProductModal from './ProductModal'; // Asegúrate de que esta ruta sea correcta
 
 function ProductCard({ item, onRemove }) {
   const [peso, setPeso] = useState(item.peso || 500);
+  const [modalOpen, setModalOpen] = useState(false); // Estado para controlar la apertura del modal
 
   const incrementarPeso = () => setPeso((prev) => prev + 250);
   const decrementarPeso = () => {
@@ -33,13 +35,29 @@ function ProductCard({ item, onRemove }) {
 
   const piramide = generarPiramide(cantidadDeEmojis);
 
-  // Tamaño dinámico de los emojis
-  const tamañoEmoji = Math.min(100 / piramide.length, 20);
+  // Tamaño dinámico de los emojis (Ajustamos el tamaño máximo cuando hay pocos emojis)
+  let tamañoEmoji = 20; // Tamaño base
+  if (piramide.length <= 3) {
+    // Cuando hay 1, 2 o 3 filas, los emojis serán más grandes
+    tamañoEmoji = 40;
+  } else {
+    // Ajustar proporcionalmente el tamaño a medida que aumentan las filas
+    tamañoEmoji = Math.min(100 / piramide.length, 15); // Aseguramos que no crezca demasiado
+  }
+
+  const openModal = () => {
+    setModalOpen(true); // Abrir modal
+  };
+
+  const closeModal = () => {
+    setModalOpen(false); // Cerrar modal
+  };
 
   return (
     <div
       className="border rounded-lg shadow-md p-2 flex flex-col items-center justify-between"
       style={{ width: '100%', height: '100%' }}
+      onClick={openModal} // Abrir el modal cuando se haga clic en cualquier lugar de la card
     >
       {/* Contenedor de emojis */}
       <div
@@ -47,7 +65,8 @@ function ProductCard({ item, onRemove }) {
         style={{
           height: '120px',
           width: '100%',
-          overflow: 'hidden',
+          overflowX: 'auto', // Añadir scroll horizontal si es necesario
+          overflowY: 'hidden', // Evitar que se desborde en el eje vertical
         }}
       >
         {piramide.map((numEmojis, filaIndex) => (
@@ -57,7 +76,7 @@ function ProductCard({ item, onRemove }) {
                 key={index}
                 className="m-1"
                 style={{
-                  fontSize: `${tamañoEmoji}px`,
+                  fontSize: `${tamañoEmoji}px`, // Tamaño dinámico de los emojis
                 }}
               >
                 {item.emoji}
@@ -70,27 +89,21 @@ function ProductCard({ item, onRemove }) {
       {/* Nombre del producto */}
       <p className="font-semibold text-md mb-2">{item.nombre}</p>
 
-      {/* Controles de peso */}
-      <div className="flex items-center">
-        <button
-          onClick={decrementarPeso}
-          className="bg-gray-200 text-black px-3 py-1 rounded-l-md hover:bg-gray-300"
-        >
-          -
-        </button>
-        <input
-          type="text"
-          value={`${peso} g`}
-          readOnly
-          className="text-center w-14 bg-gray-100 border border-gray-300 py-1"
+      {/* Peso */}
+      <p className="text-lg">{peso} g</p>
+
+      {/* Modal */}
+      {modalOpen && (
+        <ProductModal
+          item={item}
+          peso={peso}
+          setPeso={setPeso}
+          onRemove={onRemove}
+          closeModal={closeModal}
+          incrementarPeso={incrementarPeso}
+          decrementarPeso={decrementarPeso}
         />
-        <button
-          onClick={incrementarPeso}
-          className="bg-gray-200 text-black px-3 py-1 rounded-r-md hover:bg-gray-300"
-        >
-          +
-        </button>
-      </div>
+      )}
     </div>
   );
 }
