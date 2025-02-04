@@ -6,12 +6,12 @@ import ProductCard from '../components/ProductCard';
 const initialCarrousel = [
   { id: 101, nombre: 'Choclo', emoji: '🌽', cantidadPorKg: 4 },
   { id: 102, nombre: 'Brócoli', emoji: '🥦', cantidadPorKg: 6 },
-  { id: 103, nombre: 'Batata', emoji: '🍠', cantidadPorKg: 3 },
+  { id: 103, nombre: 'Batata', emoji: '🍠', cantidadPorKg: 4 },
   { id: 104, nombre: 'Papa', emoji: '🥔', cantidadPorKg: 5 },
-  { id: 105, nombre: 'Berenjena', emoji: '🍆', cantidadPorKg: 3 },
+  { id: 105, nombre: 'Berenjena', emoji: '🍆', cantidadPorKg: 4 },
   { id: 106, nombre: 'Champiñón', emoji: '🍄', cantidadPorKg: 8 },
   { id: 107, nombre: 'Ajo', emoji: '🧄', cantidadPorKg: 12 },
-  { id: 108, nombre: 'Pimiento', emoji: '🫑', cantidadPorKg: 3 },
+  { id: 108, nombre: 'Pimiento', emoji: '🫑', cantidadPorKg: 4 },
   { id: 109, nombre: 'Lechuga', emoji: '🥬', cantidadPorKg: 15 },
   { id: 110, nombre: 'Cebollas', emoji: '🧅', cantidadPorKg: 6 },
 ];
