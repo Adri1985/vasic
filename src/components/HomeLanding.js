@@ -14,6 +14,7 @@ const initialCarrousel = [
   { id: 108, nombre: 'Pimiento', emoji: '🫑', cantidadPorKg: 4 },
   { id: 109, nombre: 'Lechuga', emoji: '🥬', cantidadPorKg: 15 },
   { id: 110, nombre: 'Cebollas', emoji: '🧅', cantidadPorKg: 6 },
+  { id: 111, nombre: 'Zanahoria', emoji: '🥕', cantidadPorKg: 4 },
 ];
 
 function HomeLanding() {
